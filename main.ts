@@ -8,6 +8,10 @@ sprites.onOverlap(SpriteKind.Bullet, SpriteKind.Enemy, function (sprite, otherSp
     statusbars.getStatusBarAttachedTo(StatusBarKind.Health, otherSprite).value += 0 - BulletDamage
     sprites.destroy(sprite)
 })
+sprites.onOverlap(SpriteKind.Hero, SpriteKind.Trophy, function (sprite, otherSprite) {
+    game.gameOver(true)
+    game.setGameOverEffect(true, effects.confetti)
+})
 sprites.onOverlap(SpriteKind.Hero, SpriteKind.Enemy, function (sprite, otherSprite) {
     sprites.destroy(otherSprite, effects.disintegrate, 500)
     info.changeLifeBy(-1)
@@ -78,7 +82,8 @@ controller.A.onEvent(ControllerButtonEvent.Released, function () {
         Fire_Ball.setKind(SpriteKind.Bullet)
     }
 })
-let GameoverWIn = false
+let Trophy: Sprite = null
+let Gameover = false
 let statusbar: StatusBarSprite = null
 let Monster: Sprite = null
 let Fire_Ball: Sprite = null
@@ -217,8 +222,7 @@ let MaxBulletStamina = 2000
 BulletStamina = MaxBulletStamina
 let NewMonsterTime = 2000
 let BulletRecoveryPerSec = 1000
-let MonsterSpawnedBeforeBoss = 15
-let Trophy: Sprite = 0
+let MonsterSpawnedBeforeBoss = 3
 let SpawnedMonsters = 0
 let TickTime = 100
 Hero = sprites.create(img`
@@ -446,14 +450,18 @@ game.onUpdateInterval(NewMonsterTime, function () {
                 ....................................................................................................
                 ....................................................................................................
                 `, SpriteKind.Enemy)
-            Monster.setPosition(130, 50)
+            Monster.setPosition(130, 60)
             statusbar = statusbars.create(20, 4, StatusBarKind.Health)
             statusbar.attachToSprite(Monster)
             statusbar.max = 1000
             statusbar.value = 300
         } else {
-            if (!(GameoverWIn)) {
-                GameoverWIn = true
+            // Need to fix this.
+            // Make it a bit better
+            if (BossCreated && !(Gameover)) {
+                Gameover = true
+                game.splash("Wixard", " Thank you for saving" + " the forest")
+                game.splash("Wizard", "To show my thanks," + " I will give you this trophy")
                 Trophy = sprites.create(img`
                     ..............................
                     ..............................
