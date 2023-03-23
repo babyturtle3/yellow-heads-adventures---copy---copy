@@ -232,7 +232,7 @@ let NewMonsterTime = 2000
 let MonstersAlive = 0
 let BossDefeatede = false
 let BulletRecoveryPerSec = 1000
-let MonsterSpawnedBeforeBoss = 1
+let MonsterSpawnedBeforeBoss = 20
 let SpawnedMonsters = 0
 let TickTime = 100
 Hero = sprites.create(img`
@@ -578,8 +578,8 @@ game.onUpdateInterval(NewMonsterTime, function () {
             Monster.setPosition(130, 60)
             statusbar = statusbars.create(20, 4, StatusBarKind.Health)
             statusbar.attachToSprite(Monster)
-            statusbar.max = 200
-            statusbar.value = 200
+            statusbar.max = 600
+            statusbar.value = 600
         }
     }
 })
