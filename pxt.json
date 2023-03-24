@@ -6,7 +6,8 @@
         "pxt-status-bar": "github:jwunderl/pxt-status-bar#v0.4.2",
         "arcade-sprite-data": "github:microsoft/arcade-sprite-data#v0.2.1",
         "storyboard": "*",
-        "arcade-story": "github:microsoft/arcade-storytelling#v1.0.3"
+        "arcade-story": "github:microsoft/arcade-storytelling#v1.0.3",
+        "arcade-sprite-util": "github:jwunderl/arcade-sprite-util#v0.3.1"
     },
     "files": [
         "main.blocks",
