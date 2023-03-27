@@ -6,30 +6,40 @@ namespace SpriteKind {
     export const EnemyBullet = SpriteKind.create()
 }
 sprites.onOverlap(SpriteKind.Bullet, SpriteKind.Enemy, function (sprite, otherSprite) {
-    statusbars.getStatusBarAttachedTo(StatusBarKind.Health, otherSprite).value += 0 - BulletDamage
+    statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, otherSprite).value += 0 - BulletDamage
     sprites.destroy(sprite)
 })
 sprites.onOverlap(SpriteKind.Hero, SpriteKind.Trophy, function (sprite, otherSprite) {
-    game.splash("Elf", "Ah Ha! I finally caught you!")
-    game.splash("Elf", "Here is your trophy :)!")
+    story.spriteSayText(Trophy, "Ah Ha! I finally caught you!")
+    story.spriteSayText(Trophy, "Here is your tropgy :)!")
     game.gameOver(true)
     game.setGameOverEffect(true, effects.confetti)
     music.play(music.stringPlayable("C D E F E F G B ", 120), music.PlaybackMode.UntilDone)
     music.play(music.stringPlayable("B A G F E F E C ", 120), music.PlaybackMode.UntilDone)
 })
 sprites.onOverlap(SpriteKind.Hero, SpriteKind.Enemy, function (sprite, otherSprite) {
-    sprites.destroy(otherSprite, effects.disintegrate, 500)
-    info.changeLifeBy(-1)
-    scene.cameraShake(5, 500)
-    music.play(music.melodyPlayable(music.powerDown), music.PlaybackMode.InBackground)
+    if (ImmuneTime <= 0) {
+        info.changeLifeBy(-1)
+        scene.cameraShake(5, 500)
+        music.play(music.melodyPlayable(music.powerDown), music.PlaybackMode.InBackground)
+        if (otherSprite != Boss) {
+            KilledMonster(otherSprite)
+            sprites.destroy(otherSprite, effects.disintegrate, 500)
+        } else {
+            ImmuneTime = 1000
+        }
+    }
 })
-statusbars.onZero(StatusBarKind.Health, function (status) {
+statusbars.onZero(StatusBarKind.EnemyHealth, function (status) {
     sprite = status.spriteAttachedTo()
-    info.changeScoreBy(sprites.readDataNumber(sprite, "points"))
-    MonstersAlive += -1
+    KilledMonster(sprite)
     sprites.destroy(sprite, effects.fire, 500)
     music.play(music.melodyPlayable(music.powerUp), music.PlaybackMode.InBackground)
 })
+function KilledMonster (mySprite: Sprite) {
+    info.changeScoreBy(sprites.readDataNumber(mySprite, "points"))
+    MonstersAlive += -1
+}
 controller.A.onEvent(ControllerButtonEvent.Released, function () {
     if (BulletStamina >= BulletTiredTime) {
         BulletStamina += 0 - BulletTiredTime
@@ -91,19 +101,24 @@ controller.A.onEvent(ControllerButtonEvent.Released, function () {
 })
 sprites.onOverlap(SpriteKind.Hero, SpriteKind.Projectile, function (sprite, otherSprite) {
     info.changeLifeBy(-1)
-    sprites.destroy(otherSprite)
+    sprites.destroy(otherSprite, effects.spray, 500)
+})
+sprites.onOverlap(SpriteKind.Hero, SpriteKind.Food, function (sprite, otherSprite) {
+    info.changeScoreBy(1)
+    sprites.destroy(otherSprite, effects.smiles, 200)
 })
 let statusbar: StatusBarSprite = null
 let Monster: Sprite = null
 let EnemyBullet: Sprite = null
-let Trophy: Sprite = null
-let Gameover = false
 let Fire_Ball: Sprite = null
 let sprite: Sprite = null
+let Boss: Sprite = null
+let Trophy: Sprite = null
 let Hero: Sprite = null
 let BulletStamina = 0
 let BulletTiredTime = 0
 let BulletDamage = 0
+let ImmuneTime = 0
 scene.setBackgroundImage(img`
     88888888888888888888888888888888888888888888888888888111888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
     88888888888888888888888888888888888888888888888888888111888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
@@ -226,16 +241,38 @@ scene.setBackgroundImage(img`
     77777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
     77777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
     `)
-game.splash("Wizard", "Please save the forest" + " and the elves.")
+let Wizard = sprites.create(img`
+    . . . . . . . . f f f f f f . . 
+    . . . . . . . f 8 5 8 8 8 5 f . 
+    . . . . . f f f f f 8 5 f f 8 f 
+    . . . f f 8 8 5 8 8 f f . . f f 
+    . f f 8 5 f f f f 8 5 f f . . f 
+    . . f f f f d d d f f 8 f f . . 
+    . . . . f d d d d d d f 8 f f . 
+    . . . . f d f d d f d f 5 f . . 
+    . . . f f d f d d f d f 8 f f . 
+    . f f 8 f f d d d d f 8 f d d f 
+    f d d f 5 f f f f f 5 8 f d d f 
+    f d d f f 8 8 f 8 f 8 f 8 f f f 
+    . f f 8 f f 5 8 f 5 8 f 5 f 8 f 
+    . f f 8 f f 8 f 8 8 f f 8 f 5 f 
+    . f 5 f 8 8 f 8 5 8 8 f f 8 f f 
+    . . f f f f f f f f f f f f f . 
+    `, SpriteKind.Player)
+Wizard.setPosition(150, 60)
+story.spriteSayText(Wizard, "AHHH!")
+story.spriteMoveToLocation(Wizard, 60, 60, 30)
+story.spriteSayText(Wizard, "My powers are not strong enough! Please help save the forest and the elves!")
+story.spriteMoveToLocation(Wizard, -10, 60, 30)
 info.setLife(5)
 info.setScore(0)
+ImmuneTime = 0
 BulletDamage = 50
 BulletTiredTime = 1000
 let MaxBulletStamina = 2000
 BulletStamina = MaxBulletStamina
 let NewMonsterTime = 2000
 let MonstersAlive = 0
-let BossDefeatede = false
 let BulletRecoveryPerSec = 1000
 let MonsterSpawnedBeforeBoss = 1
 let SpawnedMonsters = 0
@@ -292,19 +329,16 @@ Hero = sprites.create(img`
     ..................................................
     ..................................................
     `, SpriteKind.Hero)
-let BossCreated = false
-let BossOne = 0
-let BossTwo = 0
-let BossThree = 0
+let Stage = 0
 let TrophySpeed = 1
 controller.moveSprite(Hero, 60, 60)
 Hero.setPosition(20, 55)
 Hero.setStayInScreen(true)
 game.onUpdate(function () {
-    if (SpawnedMonsters > 0 && (BossCreated && (!(Gameover) && MonstersAlive == 0))) {
-        Gameover = true
-        game.splash("Wixard", " Thank you for saving" + " the forest and the elves.")
-        game.splash("Wizard", "To show my thanks," + " I will give you this trophy.")
+    if (Stage == 2 && MonstersAlive == 0) {
+        Stage = 3
+        story.spriteMoveToLocation(Wizard, 60, 60, 100)
+        story.spriteSayText(sprite, "Thank you for saving the forest. To show my thanks, I shall give you this trophy")
         Trophy = sprites.create(img`
             ....................................................................................................
             ....................................................................................................
@@ -407,11 +441,17 @@ game.onUpdate(function () {
             ....................................................................................................
             ....................................................................................................
             `, SpriteKind.Trophy)
+        Trophy.setPosition(139, 50)
         Trophy.follow(Hero, TrophySpeed)
     }
 })
+game.onUpdate(function () {
+    if (Stage == 1 && statusbars.getStatusBarAttachedTo(StatusBarKind.EnemyHealth, Boss).value < 300) {
+        Stage = 2
+    }
+})
 game.onUpdateInterval(1000, function () {
-    if (BossCreated && BossOne) {
+    if (Stage == 1) {
         EnemyBullet = sprites.createProjectileFromSprite(img`
             ......................................................................
             ......................................................................
@@ -493,11 +533,11 @@ game.onUpdateInterval(1000, function () {
             ......................................................................
             ......................................................................
             ......................................................................
-            `, Monster, -150, 0)
+            `, Monster, randint(-100, -50), randint(-30, 30))
     }
 })
 game.onUpdateInterval(1000, function () {
-    if (BossCreated && BossTwo) {
+    if (Stage == 2) {
         EnemyBullet = sprites.createProjectileFromSprite(img`
             ....................................................................................................
             ....................................................................................................
@@ -599,7 +639,8 @@ game.onUpdateInterval(1000, function () {
             ....................................................................................................
             ....................................................................................................
             ....................................................................................................
-            `, Monster, -150, 0)
+            `, Monster, randint(-100, -50), randint(-30, 30))
+        EnemyBullet.setKind(SpriteKind.Food)
     }
 })
 game.onUpdateInterval(TickTime, function () {
@@ -663,16 +704,16 @@ game.onUpdateInterval(NewMonsterTime, function () {
             ..................................................
             `, SpriteKind.Enemy)
         sprites.setDataNumber(Monster, "points", 1)
-        statusbar = statusbars.create(20, 4, StatusBarKind.Health)
+        statusbar = statusbars.create(20, 4, StatusBarKind.EnemyHealth)
         statusbar.attachToSprite(Monster)
         Monster.setPosition(140, randint(0, 112))
         Monster.follow(Hero, 10)
         Monster.setStayInScreen(true)
     } else {
-        if (!(BossCreated) && MonstersAlive == 0) {
+        if (Stage == 0 && MonstersAlive == 0) {
             MonstersAlive += 1
-            BossCreated = true
-            Monster = sprites.create(img`
+            Stage = 1
+            Boss = sprites.create(img`
                 ....................................................................................................
                 ....................................................................................................
                 ....................................................................................................
@@ -774,19 +815,24 @@ game.onUpdateInterval(NewMonsterTime, function () {
                 ....................................................................................................
                 ....................................................................................................
                 `, SpriteKind.Enemy)
-            sprites.setDataNumber(Monster, "points", 5)
-            Monster.setPosition(130, 60)
-            statusbar = statusbars.create(20, 4, StatusBarKind.Health)
-            statusbar.attachToSprite(Monster)
+            sprites.setDataNumber(Boss, "points", 5)
+            Boss.setPosition(130, 60)
+            statusbar = statusbars.create(20, 4, StatusBarKind.EnemyHealth)
+            statusbar.attachToSprite(Boss)
             statusbar.max = 600
             statusbar.value = 600
         }
     }
 })
 game.onUpdateInterval(500, function () {
-    if (Gameover) {
+    if (Stage == 3) {
         TrophySpeed += 1
         Trophy.follow(Hero, TrophySpeed)
         info.changeScoreBy(1)
+    }
+})
+game.onUpdateInterval(100, function () {
+    if (ImmuneTime > 0) {
+        ImmuneTime += 0 - Math.min(100, ImmuneTime)
     }
 })
