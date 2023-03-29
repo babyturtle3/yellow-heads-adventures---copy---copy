@@ -722,11 +722,6 @@ game.onUpdateInterval(500, function () {
     }
 })
 game.onUpdateInterval(100, function () {
-    if (ImmuneTime > 0) {
-        ImmuneTime += 0 - Math.min(100, ImmuneTime)
-    }
-})
-game.onUpdateInterval(100, function () {
     if (Stage == 2 && MonstersAlive == 0) {
         Stage = 3
         story.startCutscene(function () {
@@ -838,5 +833,10 @@ game.onUpdateInterval(100, function () {
             Trophy.follow(Hero, TrophySpeed)
             Stage = 4
         })
+    }
+})
+game.onUpdateInterval(100, function () {
+    if (ImmuneTime > 0) {
+        ImmuneTime += 0 - Math.min(100, ImmuneTime)
     }
 })
